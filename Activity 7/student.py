@@ -1,33 +1,40 @@
-# =====================================
-# Student Record Model
-# =====================================
- 
-class StudentRecord:
-    def __init__(self, id_num, full_name, program, year_level, sex, email_addr):
-        self.id_num = id_num
-        self.full_name = full_name
-        self.program = program
+"""
+student.py
+Purpose: Student Class
+Defines the Student object used throughout the application (OOP principle).
+"""
+
+
+class Student:
+    """Represents a single student record."""
+
+    def __init__(self, student_id, name, course, year_level, gender, email):
+        self.student_id = student_id
+        self.name = name
+        self.course = course
         self.year_level = year_level
-        self.sex = sex
-        self.email_addr = email_addr
- 
-    def display(self):
-        print(f"ID: {self.id_num} | Name: {self.full_name} | Program: {self.program} | Year: {self.year_level} | Sex: {self.sex} | Email: {self.email_addr}")
- 
-    def to_dict(self):
-        return {
-            "id_num": self.id_num,
-            "full_name": self.full_name,
-            "program": self.program,
-            "year_level": self.year_level,
-            "sex": self.sex,
-            "email_addr": self.email_addr
-        }
- 
-    @classmethod
-    def from_row(cls, row):
-        if not row:
-            return None
-        return cls(row[0], row[1], row[2], row[3], row[4], row[5])
- 
- 
+        self.gender = gender
+        self.email = email
+
+    def to_tuple(self):
+        """Return the student's data as a tuple (useful for DB operations)."""
+        return (
+            self.student_id,
+            self.name,
+            self.course,
+            self.year_level,
+            self.gender,
+            self.email,
+        )
+
+    @staticmethod
+    def from_row(row):
+        """Build a Student object from a database row / tuple."""
+        return Student(*row)
+
+    def __str__(self):
+        return (
+            f"Student ID: {self.student_id} | Name: {self.name} | "
+            f"Course: {self.course} | Year Level: {self.year_level} | "
+            f"Gender: {self.gender} | Email: {self.email}"
+        )

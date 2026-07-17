@@ -1,70 +1,98 @@
-# =====================================
-# Database Handler (SQLite)
-# =====================================
- 
+"""
+database.py
+Purpose: SQLite Database
+Handles all database connections and CRUD (Create, Read, Update, Delete)
+operations for student records. student.db is created automatically the
+first time the application runs.
+"""
+
 import sqlite3
-import os
-from student import StudentRecord
- 
-DB_NAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'student_records.db')
- 
-def connect_db():
-    return sqlite3.connect(DB_NAME)
- 
-def setup_database():
-    with connect_db() as conn:
+
+
+class Database:
+    def __init__(self, db_name="student.db"):
+        self.db_name = db_name
+        self.create_table()
+
+    def connect(self):
+        return sqlite3.connect(self.db_name)
+
+    def create_table(self):
+        """Create the students table automatically if it doesn't exist."""
+        conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS students (
-                id_num TEXT PRIMARY KEY,
-                full_name TEXT NOT NULL,
-                program TEXT NOT NULL,
-                year_level INTEGER NOT NULL,
-                sex TEXT NOT NULL,
-                email_addr TEXT NOT NULL
+                student_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                course TEXT NOT NULL,
+                year_level TEXT NOT NULL,
+                gender TEXT NOT NULL,
+                email TEXT NOT NULL
             )
-        """)
- 
-def insert_record(record):
-    try:
-        with connect_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("""
-                INSERT INTO students (id_num, full_name, program, year_level, sex, email_addr)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (record.id_num, record.full_name, record.program, record.year_level, record.sex, record.email_addr))
-            return True
-    except sqlite3.IntegrityError:
-        return False
- 
-def fetch_record(id_num):
-    with connect_db() as conn:
+            """
+        )
+        conn.commit()
+        conn.close()
+
+    def insert_student(self, student):
+        conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM students WHERE id_num = ?", (id_num,))
-        row = cursor.fetchone()
-        if row:
-            return StudentRecord.from_row(row)
-    return None
- 
-def update_record(record):
-    with connect_db() as conn:
+        cursor.execute(
+            """
+            INSERT INTO students
+                (student_id, name, course, year_level, gender, email)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            student.to_tuple(),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_student(self, student):
+        conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE students
-            SET full_name = ?, program = ?, year_level = ?, sex = ?, email_addr = ?
-            WHERE id_num = ?
-        """, (record.full_name, record.program, record.year_level, record.sex, record.email_addr, record.id_num))
-        return cursor.rowcount > 0
- 
-def delete_record(id_num):
-    with connect_db() as conn:
+            SET name = ?, course = ?, year_level = ?, gender = ?, email = ?
+            WHERE student_id = ?
+            """,
+            (
+                student.name,
+                student.course,
+                student.year_level,
+                student.gender,
+                student.email,
+                student.student_id,
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+    def delete_student(self, student_id):
+        conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM students WHERE id_num = ?", (id_num,))
-        return cursor.rowcount > 0
- 
-def fetch_all_records():
-    with connect_db() as conn:
+        cursor.execute("DELETE FROM students WHERE student_id = ?", (student_id,))
+        conn.commit()
+        conn.close()
+
+    def search_student(self, student_id):
+        conn = self.connect()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM students")
+        cursor.execute("SELECT * FROM students WHERE student_id = ?", (student_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return row
+
+    def fetch_all_students(self):
+        conn = self.connect()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM students ORDER BY student_id")
         rows = cursor.fetchall()
-        return [StudentRecord.from_row(row) for row in rows]
+        conn.close()
+        return rows
+
+    def student_exists(self, student_id):
+        return self.search_student(student_id) is not None

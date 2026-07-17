@@ -1,89 +1,75 @@
-# =====================================
-# Input Validator
-# =====================================
- 
+"""
+validation.py
+Purpose: Input Validation
+Contains all field-level validation rules used before saving/updating a
+student record. Each function returns a tuple: (is_valid: bool, message: str)
+"""
+
 import re
- 
-def check_id(id_num):
-    val = str(id_num).strip()
-    if not val:
+
+
+def validate_student_id(student_id):
+    student_id = (student_id or "").strip()
+    if not student_id:
         return False, "Student ID cannot be empty."
-    if not val.isdigit():
-        return False, "Student ID must be a positive integer."
-    num = int(val)
-    if num < 5000:
-        return False, "Student ID must be 5000 or greater."
+    if not student_id.isdigit():
+        return False, "Student ID must contain numbers only."
     return True, ""
- 
-def check_name(name):
-    val = str(name).strip()
-    if not val:
+
+
+def validate_name(name):
+    name = (name or "").strip()
+    if not name:
         return False, "Name cannot be empty."
-    if not re.match(r"^[a-zA-Z\s.'-]+$", val):
-        return False, "Name must only contain letters, spaces, periods, hyphens, or apostrophes."
+    if not re.match(r"^[A-Za-z.\s]+$", name):
+        return False, "Name must contain letters only."
     return True, ""
- 
-def check_program(program):
-    val = str(program).strip()
-    if not val:
+
+
+def validate_course(course):
+    course = (course or "").strip()
+    if not course:
         return False, "Course cannot be empty."
-    if not re.match(r"^[a-zA-Z0-9\s.-]+$", val):
-        return False, "Course must only contain letters, numbers, spaces, periods, or hyphens."
     return True, ""
- 
-def check_year(year):
-    val = str(year).strip()
-    if not val:
+
+
+def validate_year_level(year_level):
+    year_level = (year_level or "").strip()
+    if not year_level:
         return False, "Year Level cannot be empty."
-    if not val.isdigit():
-        return False, "Year Level must be a positive integer."
-    num = int(val)
-    if num < 1 or num > 4:
-        return False, "Year Level must be between 1 and 4."
+    if not year_level.isdigit() or not (1 <= int(year_level) <= 6):
+        return False, "Year Level must be a number between 1 and 6."
     return True, ""
- 
-def check_gender(sex):
-    val = str(sex).strip()
-    if val not in ["Male", "Female"]:
-        return False, "Gender must be either 'Male' or 'Female'."
+
+
+def validate_gender(gender):
+    gender = (gender or "").strip()
+    if gender not in ("Male", "Female"):
+        return False, "Please select a gender (Male or Female)."
     return True, ""
- 
-def check_email(email):
-    val = str(email).strip()
-    if not val:
+
+
+def validate_email(email):
+    email = (email or "").strip()
+    if not email:
         return False, "Email cannot be empty."
-    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    if not re.match(pattern, val):
-        return False, "Invalid email format (e.g. user@domain.com)."
+    pattern = r"^[\w.\-]+@[\w.\-]+\.\w+$"
+    if not re.match(pattern, email):
+        return False, "Invalid email format."
     return True, ""
- 
-def validate_record_data(id_num, name, program, year, sex, email):
-    errors = {}
-   
-    ok, msg = check_id(id_num)
-    if not ok:
-        errors["id_num"] = msg
-       
-    ok, msg = check_name(name)
-    if not ok:
-        errors["name"] = msg
-       
-    ok, msg = check_program(program)
-    if not ok:
-        errors["program"] = msg
-       
-    ok, msg = check_year(year)
-    if not ok:
-        errors["year_level"] = msg
-       
-    ok, msg = check_gender(sex)
-    if not ok:
-        errors["gender"] = msg
-       
-    ok, msg = check_email(email)
-    if not ok:
-        errors["email"] = msg
-       
-    is_valid = len(errors) == 0
-    return is_valid, errors
- 
+
+
+def validate_all(student_id, name, course, year_level, gender, email):
+    """Run every field validator in order; stop and return on first failure."""
+    checks = [
+        validate_student_id(student_id),
+        validate_name(name),
+        validate_course(course),
+        validate_year_level(year_level),
+        validate_gender(gender),
+        validate_email(email),
+    ]
+    for is_valid, message in checks:
+        if not is_valid:
+            return False, message
+    return True, ""

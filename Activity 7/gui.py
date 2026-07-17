@@ -1,362 +1,308 @@
-# =====================================
-# GUI Module (Dark Mode)
-# =====================================
- 
+"""
+gui.py
+Purpose: GUI Implementation ( Cyberpunk Theme)
+Builds the Tkinter interface with a Cyberpunk-inspired color palette:
+Sky blue backgrounds, Dirt brown frames, Grass green buttons, 
+and Wooden UI tables.
+"""
+
 import tkinter as tk
 from tkinter import ttk, messagebox
-import database
-from student import StudentRecord
-from validation import validate_record_data
- 
-class StudentGui:
+
+from student import Student
+from database import Database
+import validation
+
+
+class StudentGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Student Information Management System")
-        self.root.geometry("880x760")
-        self.root.minsize(800, 700)
-        self.root.configure(bg="#1e1e24")
- 
-        database.setup_database()
-        self.setup_styles()
- 
-        self.create_header()
-        self.create_main_container()
-        self.create_form_fields()
-        self.create_button_panel()
-        self.create_records_table()
- 
-        self.refresh_table()
- 
-    def setup_styles(self):
-        self.style = ttk.Style()
-        self.style.theme_use("clam")
-       
-        self.style.configure("Treeview",
-                            background="#2a2a35",
-                            foreground="#ffffff",
-                            rowheight=26,
-                            fieldbackground="#2a2a35",
-                            font=("Segoe UI", 9))
-        self.style.map("Treeview",
-                       background=[("selected", "#3498db")],
-                       foreground=[("selected", "#ffffff")])
-       
-        self.style.configure("Treeview.Heading",
-                            background="#3f3f4c",
-                            foreground="#ffffff",
-                            font=("Segoe UI", 10, "bold"),
-                            borderwidth=1)
- 
-    def create_header(self):
-        header_frame = tk.Frame(self.root, bg="#2c3e50", height=60)
-        header_frame.pack(fill=tk.X)
-        header_frame.pack_propagate(False)
- 
-        title_label = tk.Label(header_frame,
-                               text="STUDENT INFORMATION MANAGEMENT SYSTEM",
-                               font=("Segoe UI", 16, "bold"),
-                               fg="#ffffff",
-                               bg="#2c3e50")
-        title_label.pack(expand=True, fill=tk.BOTH)
- 
-    def create_main_container(self):
-        self.container = tk.Frame(self.root, bg="#1e1e24", padx=20, pady=15)
-        self.container.pack(fill=tk.BOTH, expand=True)
- 
-    def create_form_fields(self):
-        self.form_frame = tk.LabelFrame(self.container,
-                                        text=" Student Information Form ",
-                                        font=("Segoe UI", 11, "bold"),
-                                        fg="#ffffff",
-                                        bg="#2a2a35",
-                                        padx=15,
-                                        pady=15,
-                                        relief="solid",
-                                        bd=1)
-        self.form_frame.pack(fill=tk.X, pady=(0, 10))
- 
-        self.form_frame.columnconfigure(0, weight=1)
-        self.form_frame.columnconfigure(1, weight=3)
- 
-        self.var_id = tk.StringVar()
-        self.var_name = tk.StringVar()
-        self.var_program = tk.StringVar()
-        self.var_year = tk.StringVar()
-        self.var_sex = tk.StringVar(value="Male")
-        self.var_email = tk.StringVar()
- 
-        fields = [
-            ("STUDENT ID :", self.var_id, 0),
-            ("NAME :", self.var_name, 1),
-            ("COURSE :", self.var_program, 2),
-            ("YEAR LEVEL :", self.var_year, 3)
+        self.root.title("Student Information Management System - neon_pink Edition")
+        self.root.geometry("780x680")
+        self.root.resizable(False, False)
+
+        # Alternative Cyberpunk Theme Colors
+        self.bg_sky = "#080B16"       # Midnight blue background
+        self.bg_dirt = "#121A2A"      # Dark blue panels
+        self.fg_text = "#E6F1FF"      # Cool white text
+        self.bg_grass = "#FF6B00"     # Neon orange buttons
+        self.bg_wood = "#1B263B"      # Deep blue table
+        self.bg_sand = "#0F172A"      # Dark entry fields
+
+        self.neon_orange = "#FF6B00"
+        self.neon_blue = "#00BFFF"
+        self.neon_yellow = "#FFD166"
+
+        self.font_retro = ("Courier", 10, "bold")
+        self.font_title = ("Courier", 15, "bold")
+
+        self.font_retro = ("Courier", 10, "bold")
+        self.font_title = ("Courier", 15, "bold")
+
+        # Apply sky background to main window
+        self.root.configure(bg=self.bg_sky)
+
+        self.db = Database()
+
+        # Form variables
+        self.student_id_var = tk.StringVar()
+        self.name_var = tk.StringVar()
+        self.course_var = tk.StringVar()
+        self.year_level_var = tk.StringVar()
+        self.gender_var = tk.StringVar()
+        self.email_var = tk.StringVar()
+
+        self.build_widgets()
+
+    # ------------------------------------------------------------------ #
+    # UI BUILD
+    # ------------------------------------------------------------------ #
+    def build_widgets(self):
+        title = tk.Label(
+            self.root,
+            text="STUDENT INFORMATION MANAGEMENT SYSTEM",
+            font=self.font_title,
+            bg=self.bg_sky,
+            fg="#FFD700" # Gold coins/Sun color
+        )
+        title.pack(pady=10)
+
+        # Form Frame (Dirt block style)
+        form_frame = tk.Frame(self.root, bg=self.bg_dirt, bd=4, relief="ridge")
+        form_frame.pack(pady=5, padx=20, fill="x")
+
+        # Labels + Entry widgets
+        entry_fields = [
+            ("Student ID:", self.student_id_var),
+            ("Name:", self.name_var),
+            ("Course:", self.course_var),
+            ("Year Level:", self.year_level_var),
         ]
- 
-        for label_text, var, row in fields:
-            lbl = tk.Label(self.form_frame, text=label_text, font=("Segoe UI", 10, "bold"), bg="#2a2a35", fg="#e2e8f0", anchor="w")
-            lbl.grid(row=row, column=0, sticky="w", pady=6, padx=(0, 10))
-           
-            entry = tk.Entry(self.form_frame, textvariable=var, font=("Segoe UI", 10), bg="#3f3f4c", fg="#ffffff", insertbackground="#ffffff", bd=1, relief="solid")
-            entry.grid(row=row, column=1, sticky="ew", pady=6)
- 
-        lbl_gender = tk.Label(self.form_frame, text="GENDER :", font=("Segoe UI", 10, "bold"), bg="#2a2a35", fg="#e2e8f0", anchor="w")
-        lbl_gender.grid(row=4, column=0, sticky="w", pady=6, padx=(0, 10))
- 
-        gender_subframe = tk.Frame(self.form_frame, bg="#2a2a35")
-        gender_subframe.grid(row=4, column=1, sticky="w", pady=6)
- 
-        self.radio_male = tk.Radiobutton(gender_subframe, text="Male", variable=self.var_sex, value="Male",
-                                         font=("Segoe UI", 10), bg="#2a2a35", fg="#ffffff", selectcolor="#3f3f4c", activebackground="#2a2a35", activeforeground="#ffffff")
-        self.radio_male.pack(side=tk.LEFT, padx=(0, 20))
-       
-        self.radio_female = tk.Radiobutton(gender_subframe, text="Female", variable=self.var_sex, value="Female",
-                                           font=("Segoe UI", 10), bg="#2a2a35", fg="#ffffff", selectcolor="#3f3f4c", activebackground="#2a2a35", activeforeground="#ffffff")
-        self.radio_female.pack(side=tk.LEFT)
- 
-        lbl_email = tk.Label(self.form_frame, text="EMAIL :", font=("Segoe UI", 10, "bold"), bg="#2a2a35", fg="#e2e8f0", anchor="w")
-        lbl_email.grid(row=5, column=0, sticky="w", pady=6, padx=(0, 10))
-       
-        entry_email = tk.Entry(self.form_frame, textvariable=self.var_email, font=("Segoe UI", 10), bg="#3f3f4c", fg="#ffffff", insertbackground="#ffffff", bd=1, relief="solid")
-        entry_email.grid(row=5, column=1, sticky="ew", pady=6)
- 
-    def create_button_panel(self):
-        self.btn_frame = tk.Frame(self.container, bg="#1e1e24")
-        self.btn_frame.pack(fill=tk.X, pady=(5, 15))
- 
-        row1_frame = tk.Frame(self.btn_frame, bg="#1e1e24")
-        row1_frame.pack(anchor="center", pady=(0, 5))
- 
-        row2_frame = tk.Frame(self.btn_frame, bg="#1e1e24")
-        row2_frame.pack(anchor="center")
- 
-        self.btn_save = self.create_button(row1_frame, "SAVE", "#2ecc71", "#27ae60", self.save_record)
-        self.btn_save.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_search = self.create_button(row1_frame, "SEARCH", "#3498db", "#2980b9", self.search_record)
-        self.btn_search.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_update = self.create_button(row1_frame, "UPDATE", "#f39c12", "#d35400", self.update_record)
-        self.btn_update.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_delete = self.create_button(row2_frame, "DELETE", "#e74c3c", "#c0392b", self.delete_record)
-        self.btn_delete.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_display = self.create_button(row2_frame, "DISPLAY", "#9b59b6", "#8e44ad", self.display_all_records)
-        self.btn_display.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_clear = self.create_button(row2_frame, "CLEAR", "#7f8c8d", "#718093", self.clear_fields)
-        self.btn_clear.pack(side=tk.LEFT, padx=8)
- 
-        self.btn_exit = self.create_button(row2_frame, "EXIT", "#2c3e50", "#1a252f", self.exit_application)
-        self.btn_exit.pack(side=tk.LEFT, padx=8)
- 
-    def create_button(self, parent, text, bg_color, hover_color, command):
-        btn = tk.Button(parent,
-                        text=text,
-                        bg=bg_color,
-                        fg="#ffffff",
-                        activebackground=hover_color,
-                        activeforeground="#ffffff",
-                        font=("Segoe UI", 10, "bold"),
-                        relief="flat",
-                        bd=0,
-                        cursor="hand2",
-                        width=12,
-                        pady=6)
-       
-        btn.bind("<Enter>", lambda e: btn.config(bg=hover_color))
-        btn.bind("<Leave>", lambda e: btn.config(bg=bg_color))
-        btn.config(command=command)
-        return btn
- 
-    def create_records_table(self):
-        table_container = tk.Frame(self.container, bg="#1e1e24")
-        table_container.pack(fill=tk.BOTH, expand=True)
- 
-        lbl_records = tk.Label(table_container,
-                               text="STUDENT RECORDS",
-                               font=("Segoe UI", 11, "bold"),
-                               fg="#ffffff",
-                               bg="#1e1e24")
-        lbl_records.pack(anchor="w", pady=(5, 5))
- 
-        tree_frame = tk.Frame(table_container, bd=1, relief="solid")
-        tree_frame.pack(fill=tk.BOTH, expand=True)
- 
-        columns = ("id", "name", "course", "year", "gender", "email")
-        self.tree = ttk.Treeview(tree_frame, columns=columns, show="headings")
-       
-        self.tree.heading("id", text="STUDENT ID")
-        self.tree.heading("name", text="NAME")
-        self.tree.heading("course", text="COURSE")
-        self.tree.heading("year", text="YEAR")
-        self.tree.heading("gender", text="GENDER")
-        self.tree.heading("email", text="EMAIL")
- 
-        self.tree.column("id", width=100, anchor="center")
-        self.tree.column("name", width=180, anchor="w")
-        self.tree.column("course", width=110, anchor="center")
-        self.tree.column("year", width=70, anchor="center")
-        self.tree.column("gender", width=80, anchor="center")
-        self.tree.column("email", width=180, anchor="w")
- 
-        scrollbar = ttk.Scrollbar(tree_frame, orient=tk.VERTICAL, command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
-       
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.tree.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
- 
+
+        for i, (label_text, var) in enumerate(entry_fields):
+            tk.Label(
+                form_frame, text=label_text, font=self.font_retro, width=12, anchor="w",
+                bg=self.bg_dirt, fg=self.fg_text
+            ).grid(row=i, column=0, padx=5, pady=6, sticky="w")
+            tk.Entry(
+                form_frame, textvariable=var, width=42,
+                font=("Courier", 10), bg=self.bg_sand, fg="#000000"
+            ).grid(row=i, column=1, padx=5, pady=6, sticky="w")
+
+        # Gender radiobuttons
+        tk.Label(
+            form_frame, text="Gender:", font=self.font_retro, width=12, anchor="w",
+            bg=self.bg_dirt, fg=self.fg_text
+        ).grid(row=4, column=0, padx=5, pady=6, sticky="w")
+        gender_frame = tk.Frame(form_frame, bg=self.bg_dirt)
+        gender_frame.grid(row=4, column=1, sticky="w")
+        
+        tk.Radiobutton(
+            gender_frame, text="Male", variable=self.gender_var, value="Male",
+            bg=self.bg_dirt, fg=self.fg_text, selectcolor=self.bg_wood, 
+            font=self.font_retro, activebackground=self.bg_dirt, activeforeground=self.fg_text
+        ).pack(side="left")
+        tk.Radiobutton(
+            gender_frame, text="Female", variable=self.gender_var, value="Female",
+            bg=self.bg_dirt, fg=self.fg_text, selectcolor=self.bg_wood, 
+            font=self.font_retro, activebackground=self.bg_dirt, activeforeground=self.fg_text
+        ).pack(side="left", padx=(15, 0))
+
+        # Email
+        tk.Label(
+            form_frame, text="Email:", font=self.font_retro, width=12, anchor="w",
+            bg=self.bg_dirt, fg=self.fg_text
+        ).grid(row=5, column=0, padx=5, pady=6, sticky="w")
+        tk.Entry(
+            form_frame, textvariable=self.email_var, width=42,
+            font=("Courier", 10), bg=self.bg_sand, fg="#000000"
+        ).grid(row=5, column=1, padx=5, pady=6, sticky="w")
+
+        # Buttons (Grass block style)
+        button_frame = tk.Frame(self.root, bg=self.bg_sky)
+        button_frame.pack(pady=15)
+
+        btn_style = {
+            "width": 11, 
+            "font": self.font_retro,
+            "bg": self.bg_grass,
+            "fg": self.fg_text,
+            "activebackground": "#388E3C", # Darker green on click
+            "activeforeground": self.fg_text,
+            "bd": 3,
+            "relief": "raised"
+        }
+
+        tk.Button(button_frame, text="Save", command=self.save_student, **btn_style).grid(row=0, column=0, padx=5, pady=5)
+        tk.Button(button_frame, text="Search", command=self.search_student, **btn_style).grid(row=0, column=1, padx=5, pady=5)
+        tk.Button(button_frame, text="Update", command=self.update_student, **btn_style).grid(row=0, column=2, padx=5, pady=5)
+        tk.Button(button_frame, text="Delete", command=self.delete_student, **btn_style).grid(row=1, column=0, padx=5, pady=5)
+        tk.Button(button_frame, text="Display All", command=self.display_all_students, **btn_style).grid(row=1, column=1, padx=5, pady=5)
+        tk.Button(button_frame, text="Clear", command=self.clear_fields, **btn_style).grid(row=1, column=2, padx=5, pady=5)
+        
+        # Exit button gets a Lava / Underworld red color
+        exit_btn_style = btn_style.copy()
+        exit_btn_style.update({"bg": "#B22222", "activebackground": "#8B0000"})
+        tk.Button(button_frame, text="Exit", command=self.root.quit, **exit_btn_style).grid(row=1, column=3, padx=5, pady=5)
+
+        # Student Records table label
+        records_label = tk.Label(
+            self.root, text="STUDENT RECORDS", font=("Courier", 12, "bold"),
+            bg=self.bg_sky, fg="#FFD700"
+        )
+        records_label.pack(pady=(10, 5))
+
+        # Customizing the Treeview to look like a Wooden Chest Interface
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure(
+            "Treeview",
+            background=self.bg_wood,
+            foreground=self.fg_text,
+            rowheight=25,
+            fieldbackground=self.bg_wood,
+            font=("Courier", 9)
+        )
+        style.map("Treeview", background=[("selected", "#CD853F")]) # Lighter wood on select
+        style.configure(
+            "Treeview.Heading", 
+            background=self.bg_dirt, 
+            foreground=self.fg_text, 
+            font=self.font_retro
+        )
+
+        columns = ("student_id", "name", "course", "year_level", "gender", "email")
+        self.tree = ttk.Treeview(
+            self.root, columns=columns, show="headings", height=10
+        )
+        headings = ["Student ID", "Name", "Course", "Year Level", "Gender", "Email"]
+        widths = [80, 160, 90, 90, 70, 190]
+        for col, heading, w in zip(columns, headings, widths):
+            self.tree.heading(col, text=heading)
+            self.tree.column(col, width=w, anchor="center")
+        self.tree.pack(pady=5, padx=15, fill="x")
+
         self.tree.bind("<<TreeviewSelect>>", self.on_row_select)
- 
-    def on_row_select(self, event):
-        selected_items = self.tree.selection()
-        if not selected_items:
-            return
-       
-        item_values = self.tree.item(selected_items[0])["values"]
-       
-        self.var_id.set(item_values[0])
-        self.var_name.set(item_values[1])
-        self.var_program.set(item_values[2])
-        self.var_year.set(item_values[3])
-        self.var_sex.set(item_values[4])
-        self.var_email.set(item_values[5])
- 
-    def refresh_table(self, records_list=None):
-        for item in self.tree.get_children():
-            self.tree.delete(item)
- 
-        if records_list is None:
-            records_list = database.fetch_all_records()
- 
-        for s in records_list:
-            self.tree.insert("", tk.END, values=(s.id_num, s.full_name, s.program, s.year_level, s.sex, s.email_addr))
- 
-    # --- Button Function Handlers ---
- 
-    def save_record(self):
-        id_num = self.var_id.get().strip()
-        name = self.var_name.get().strip()
-        program = self.var_program.get().strip()
-        year = self.var_year.get().strip()
-        sex = self.var_sex.get()
-        email = self.var_email.get().strip()
- 
-        is_valid, errors = validate_record_data(id_num, name, program, year, sex, email)
-        if not is_valid:
-            error_message = "\n".join([f"- {msg}" for msg in errors.values()])
-            messagebox.showwarning("Validation Error", f"Please fix the following errors:\n\n{error_message}")
-            return
- 
-        existing = database.fetch_record(id_num)
-        if existing:
-            messagebox.showwarning("Duplicate Entry", f"Student ID '{id_num}' already exists in records.\nTo modify it, please use the UPDATE button.")
-            return
- 
-        new_student = StudentRecord(id_num, name, program, int(year), sex, email)
-        success = database.insert_record(new_student)
-       
-        if success:
-            messagebox.showinfo("Success", "Student record successfully saved!")
-            self.clear_fields()
-            
-        else:
-            messagebox.showerror("Error", "An error occurred while inserting the record.")
- 
-    def search_record(self):
-        id_num = self.var_id.get().strip()
-        if not id_num:
-            messagebox.showwarning("Missing Input", "Please enter a Student ID to search.")
-            return
- 
-        student = database.fetch_record(id_num)
-        if student:
-            self.clear_fields()
-            self.var_id.set(student.id_num)
-            self.var_name.set(student.full_name)
-            self.var_program.set(student.program)
-            self.var_year.set(str(student.year_level))
-            self.var_sex.set(student.sex)
-            self.var_email.set(student.email_addr)
-           
-            for item in self.tree.get_children():
-                if self.tree.item(item)["values"][0] == student.id_num:
-                    self.tree.selection_set(item)
-                    self.tree.see(item)
-                    break
-                   
-            messagebox.showinfo("Search Results", f"Student Record for ID '{id_num}' found.")
-        else:
-            messagebox.showinfo("Search Results", f"Student Record with ID '{id_num}' was not found.")
- 
-    def update_record(self):
-        id_num = self.var_id.get().strip()
-        name = self.var_name.get().strip()
-        program = self.var_program.get().strip()
-        year = self.var_year.get().strip()
-        sex = self.var_sex.get()
-        email = self.var_email.get().strip()
- 
-        is_valid, errors = validate_record_data(id_num, name, program, year, sex, email)
-        if not is_valid:
-            error_message = "\n".join([f"- {msg}" for msg in errors.values()])
-            messagebox.showwarning("Validation Error", f"Please fix the following errors:\n\n{error_message}")
-            return
- 
-        existing = database.fetch_record(id_num)
-        if not existing:
-            messagebox.showwarning("Record Missing", f"Student ID '{id_num}' does not exist.\nCannot update a non-existent record.")
-            return
- 
-        updated_student = StudentRecord(id_num, name, program, int(year), sex, email)
-        success = database.update_record(updated_student)
-       
-        if success:
-            messagebox.showinfo("Success", "Student record successfully updated!")
-            self.clear_fields()
-            self.refresh_table()
-        else:
-            messagebox.showerror("Error", "No changes made, or update failed.")
- 
-    def delete_record(self):
-        id_num = self.var_id.get().strip()
-        if not id_num:
-            messagebox.showwarning("Missing Input", "Please enter or select a Student ID to delete.")
-            return
- 
-        student = database.fetch_record(id_num)
-        if not student:
-            messagebox.showinfo("Not Found", f"Student Record with ID '{id_num}' does not exist.")
-            return
- 
-        confirm = messagebox.askyesno("Confirm Delete", f"Are you sure you want to permanently delete the student record for:\n\nID: {student.id_num}\nName: {student.full_name}?")
-        if confirm:
-            success = database.delete_record(id_num)
-            if success:
-                messagebox.showinfo("Success", "Student record successfully deleted.")
-                self.clear_fields()
-                self.refresh_table()
-            else:
-                messagebox.showerror("Error", "Failed to delete the record.")
- 
-    def display_all_records(self):
-        records = database.fetch_all_records()
-        self.refresh_table(records)
-        if not records:
-            messagebox.showinfo("Records Display", "No student records found in the database.")
-        else:
-            messagebox.showinfo("Records Display", f"Loaded {len(records)} records from the database.")
- 
+
+    # ------------------------------------------------------------------ #
+    # HELPERS
+    # ------------------------------------------------------------------ #
+    def get_form_values(self):
+        return (
+            self.student_id_var.get().strip(),
+            self.name_var.get().strip(),
+            self.course_var.get().strip(),
+            self.year_level_var.get().strip(),
+            self.gender_var.get().strip(),
+            self.email_var.get().strip(),
+        )
+
     def clear_fields(self):
-        self.var_id.set("")
-        self.var_name.set("")
-        self.var_program.set("")
-        self.var_year.set("")
-        self.var_sex.set("Male")
-        self.var_email.set("")
-        self.tree.selection_remove(self.tree.selection())
- 
-    def exit_application(self):
-        confirm = messagebox.askyesno("Confirm Exit", "Are you sure you want to exit the application?")
+        self.student_id_var.set("")
+        self.name_var.set("")
+        self.course_var.set("")
+        self.year_level_var.set("")
+        self.gender_var.set("")
+        self.email_var.set("")
+
+    def populate_fields(self, row):
+        student = Student.from_row(row)
+        self.student_id_var.set(student.student_id)
+        self.name_var.set(student.name)
+        self.course_var.set(student.course)
+        self.year_level_var.set(student.year_level)
+        self.gender_var.set(student.gender)
+        self.email_var.set(student.email)
+
+    def on_row_select(self, event):
+        selected = self.tree.selection()
+        if selected:
+            values = self.tree.item(selected[0], "values")
+            self.populate_fields(values)
+
+    # ------------------------------------------------------------------ #
+    # BUTTON ACTIONS 
+    # ------------------------------------------------------------------ #
+    def save_student(self):
+        student_id, name, course, year_level, gender, email = self.get_form_values()
+        is_valid, message = validation.validate_all(
+            student_id, name, course, year_level, gender, email
+        )
+        if not is_valid:
+            messagebox.showerror("Validation Error", message)
+            return
+        if self.db.student_exists(student_id):
+            messagebox.showerror("Error", f"Student ID {student_id} already exists.")
+            return
+
+        student = Student(student_id, name, course, year_level, gender, email)
+        self.db.insert_student(student)
+        messagebox.showinfo("Success", "Student record saved successfully.")
+        self.clear_fields()
+        
+        # Clear the display table when saving
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+
+    def search_student(self):
+        student_id = self.student_id_var.get().strip()
+        is_valid, message = validation.validate_student_id(student_id)
+        if not is_valid:
+            messagebox.showerror("Validation Error", message)
+            return
+
+        row = self.db.search_student(student_id)
+        if row is None:
+            messagebox.showinfo("Not Found", f"No student found with ID {student_id}.")
+            return
+
+        self.populate_fields(row)
+        messagebox.showinfo("Found", "Student record found.")
+        
+        # Clear the table and display only the searched result
+        for child in self.tree.get_children():
+            self.tree.delete(child)
+        self.tree.insert("", "end", values=row)
+
+    def update_student(self):
+        student_id, name, course, year_level, gender, email = self.get_form_values()
+        is_valid, message = validation.validate_all(
+            student_id, name, course, year_level, gender, email
+        )
+        if not is_valid:
+            messagebox.showerror("Validation Error", message)
+            return
+        if not self.db.student_exists(student_id):
+            messagebox.showerror("Error", f"No student found with ID {student_id}.")
+            return
+
+        student = Student(student_id, name, course, year_level, gender, email)
+        self.db.update_student(student)
+        messagebox.showinfo("Success", "Student record updated successfully.")
+        self.clear_fields()
+        self.display_all_students()
+
+    def delete_student(self):
+        student_id = self.student_id_var.get().strip()
+        is_valid, message = validation.validate_student_id(student_id)
+        if not is_valid:
+            messagebox.showerror("Validation Error", message)
+            return
+        if not self.db.student_exists(student_id):
+            messagebox.showerror("Error", f"No student found with ID {student_id}.")
+            return
+
+        confirm = messagebox.askyesno(
+            "Confirm Delete", f"Are you sure you want to delete student {student_id}?"
+        )
         if confirm:
-            self.root.destroy()
+            self.db.delete_student(student_id)
+            messagebox.showinfo("Deleted", "Student record deleted successfully.")
+            self.clear_fields()
+            self.display_all_students()
+
+    def display_all_students(self):
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for student_row in self.db.fetch_all_students():
+            self.tree.insert("", "end", values=student_row)
